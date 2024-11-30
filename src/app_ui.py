@@ -34,26 +34,29 @@ def on_start_click(setting, character_name, goal, language):
     story = Story()
     story_manager = StoryManager(character, story, model_handler)
 
-    logging.info(f"Character initialized: {character.__dict__}")
-    logging.info(f"Story initialized: {story.__dict__}")
-    logging.info(LOG_DIVIDER)
-
     # Start the story
     story_manager.start_story()
 
-    # Generate the story summary
+    # Summarize the story
     story_manager.summarize_story()
-
-    logging.info(f"Character after stats generation: {character.__dict__}")
-    logging.info(f"Story after introduction: {story.__dict__}")
-    logging.info(LOG_DIVIDER)
 
     # Update outputs
     stats_table = [[stat.name, stat.value] for stat in character.stats]
     updated_story = story.plot
     updated_summary = story.summary
-    updated_choices = gr.update(choices=story.choices, interactive=True)
-    confirm_choice_interactive = gr.update(interactive=True)
+
+    if story.current_choice:
+        updated_choices = gr.update(
+            choices=[story.current_choice.choice1, story.current_choice.choice2],
+            interactive=True,
+        )
+        logging.info(f"[on_start_click] Current choices: {updated_choices}")
+    else:
+        updated_choices = gr.update(choices=[], interactive=False)
+        logging.info("[on_start_click] No choices available.")
+
+
+    confirm_choice_interactive = gr.update(interactive=True if updated_choices else False)
     conclude_interactive = gr.update(interactive=True)
 
     return (
@@ -90,17 +93,26 @@ def on_confirm_choice_click(choice):
     # Continue the story
     story_manager.continue_story(choice)
 
+    for c in story_manager.story.choices:
+        logging.info(f"@@@@@@@@@@@@@@@@@ {c.choice1} @@@@@@@@@@@@@@@@@ {c.choice2} @@@@@@@@@@@@@@@@@ {c.selected_choice}")
+
     # Update the story summary
     story_manager.summarize_story()
 
-    logging.info(f"Updated story after choice: {story_manager.story.__dict__}")
-    logging.info(LOG_DIVIDER)
-
-    # Update outputs
     updated_story = story_manager.story.plot
     updated_summary = story_manager.story.summary
-    updated_choices = gr.update(choices=story_manager.story.choices, interactive=True)
-    confirm_choice_interactive = gr.update(interactive=True)
+
+    if story_manager.story.current_choice:
+        updated_choices = gr.update(
+            choices=[story_manager.story.current_choice.choice1, story_manager.story.current_choice.choice2],
+            interactive=True,
+        )
+        logging.info(f"[on_confirm_choice_click] New Choices: {updated_choices}")
+    else:
+        updated_choices = gr.update(choices=[], interactive=False)
+        logging.info("[on_confirm_choice_click] No further choices available.")
+
+    confirm_choice_interactive = gr.update(interactive=True if updated_choices else False)
 
     return updated_story, updated_summary, updated_choices, confirm_choice_interactive
 
@@ -161,6 +173,7 @@ def on_reset_click():
         goal_input_reset,
         stats_table_reset,
     )
+
 
 
 def gradio_interface():

@@ -1,7 +1,8 @@
 from models.character import Character
+from models.choice import Choice
 from models.model_handler import ModelHandler
-from models.story import Story
 from models.stat import Stat
+from models.story import Story
 
 
 class StoryManager:
@@ -31,15 +32,27 @@ class StoryManager:
         )
 
         # Generate the initial choices
-        self.story.choices = self.model_handler.generate_choices(self.story.plot)
+        choices_text = self.model_handler.generate_choices(self.story.plot)
+        self.story.current_choice = Choice(
+            choice1=choices_text[0], choice2=choices_text[1]
+        )
 
-    def continue_story(self, choice: str):
+    def continue_story(self, selected_choice: str):
         """
         Continues the story by appending a new block and generating the next set of choices.
         """
-        new_block = self.model_handler.continue_story(self.story.plot, choice)
+        # Update the selected choice in the current Choice object
+        if self.story.current_choice:
+            self.story.current_choice.selected_choice = selected_choice
+            self.story.choices.append(self.story.current_choice)
+
+        # Continue the story with the selected choice
+        new_block = self.model_handler.continue_story(self.story.plot, selected_choice)
         self.story.plot += "\n\n" + new_block
-        self.story.choices = self.model_handler.generate_choices(self.story.plot)
+
+        # Generate the next set of choices
+        choices_text = self.model_handler.generate_choices(new_block)
+        self.story.current_choice = Choice(choice1=choices_text[0], choice2=choices_text[1])
 
     def end_story(self):
         """
@@ -47,7 +60,7 @@ class StoryManager:
         """
         conclusion = self.model_handler.generate_conclusion(self.story.plot)
         self.story.plot += "\n\n" + conclusion
-        self.story.choices = []  # No choices after the story ends
+        self.story.current_choice = None  # No choice after the story ends
 
     def reset(self):
         """
@@ -57,6 +70,7 @@ class StoryManager:
         self.story.plot = ""
         self.story.summary = ""
         self.story.choices = []
+        self.story.current_choice = None
 
     def summarize_story(self):
         """
