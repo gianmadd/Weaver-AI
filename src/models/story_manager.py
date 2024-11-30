@@ -3,77 +3,76 @@ from models.choice import Choice
 from models.model_handler import ModelHandler
 from models.stat import Stat
 from models.story import Story
+from typing import List
 
 
 class StoryManager:
+    character: Character
+    story: Story
+    model_handler: ModelHandler
 
-    def __init__(self, character: Character, story: Story, model_handler: ModelHandler):
+    def __init__(self, character: Character, story: Story, model_handler: ModelHandler) -> None:
         self.character = character
         self.story = story
         self.model_handler = model_handler
 
-    def start_story(self):
-        """
-        Generates the character stats, story introduction, and initial choices.
-        """
-        # Generate stats using the LLM
-        stats_names = self.model_handler.generate_statistics(
-            self.character.setting, self.character.name, self.character.goal
+    def start_story(self) -> None:
+        stats_names: List[str] = self.model_handler.generate_statistics(
+            setting=self.character.setting, 
+            name=self.character.name, 
+            goal=self.character.goal
         )
 
-        # Create Stat object and adding them to character object
         for name in stats_names:
             stat = Stat(name)
             self.character.add_stat(stat)
 
-        # Generate the introduction
         self.story.plot = self.model_handler.generate_introduction(
-            self.character.setting, self.character.name, self.character.goal
+            setting=self.character.setting, 
+            name=self.character.name, 
+            goal=self.character.goal
         )
 
-        # Generate the initial choices
-        choices_text = self.model_handler.generate_choices(self.story.plot)
+        choices_text: List[str] = self.model_handler.generate_choices(plot=self.story.plot)
         self.story.current_choice = Choice(
-            choice1=choices_text[0], choice2=choices_text[1]
+            choice1=choices_text[0], 
+            choice2=choices_text[1]
         )
 
-    def continue_story(self, selected_choice: str):
-        """
-        Continues the story by appending a new block and generating the next set of choices.
-        """
-        # Update the selected choice in the current Choice object
+    def continue_story(self, selected_choice: str) -> None:
         if self.story.current_choice:
             self.story.current_choice.selected_choice = selected_choice
             self.story.choices.append(self.story.current_choice)
 
-        # Continue the story with the selected choice
-        new_block = self.model_handler.continue_story(self.story.plot, selected_choice)
+        new_block: str = self.model_handler.continue_story(plot=self.story.plot, choice=selected_choice)
         self.story.plot += "\n\n" + new_block
 
-        # Generate the next set of choices
-        choices_text = self.model_handler.generate_choices(new_block)
-        self.story.current_choice = Choice(choice1=choices_text[0], choice2=choices_text[1])
+        choices_text: List[str] = self.model_handler.generate_choices(plot=new_block)
+        self.story.current_choice = Choice(
+            choice1=choices_text[0], 
+            choice2=choices_text[1]
+        )
 
-    def end_story(self):
-        """
-        Generates the conclusion of the story.
-        """
-        conclusion = self.model_handler.generate_conclusion(self.story.plot)
+    def end_story(self) -> None:
+        conclusion: str = self.model_handler.generate_conclusion(plot=self.story.plot)
         self.story.plot += "\n\n" + conclusion
         self.story.current_choice = None  # No choice after the story ends
 
-    def reset(self):
-        """
-        Resets the story and character to their initial states.
-        """
+    def reset(self) -> None:
         self.character.stats.clear()
         self.story.plot = ""
         self.story.summary = ""
         self.story.choices = []
         self.story.current_choice = None
 
-    def summarize_story(self):
-        """
-        Summarizes the story using the model handler's summarize_story method.
-        """
-        self.story.summary = self.model_handler.summarize_story(self.story.plot)
+    def summarize_story(self) -> None:
+        self.story.summary = self.model_handler.summarize_story(plot=self.story.plot)
+
+    def __str__(self) -> str:
+        return (
+            f"StoryManager(\n"
+            f"  Character: {self.character},\n"
+            f"  Story: {self.story},\n"
+            f"  ModelHandler: {self.model_handler}\n"
+            f")"
+        )

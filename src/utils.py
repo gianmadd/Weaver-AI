@@ -1,15 +1,16 @@
 import json
 import random
-
-def get_random_triple(file_path):
-    # Leggi il file JSON
-    with open(file_path, "r") as f:
-        data = json.load(f)
-    
-    # Scegli una tripla casuale
-    random_entry = random.choice(data)
-    
-    # Restituisci i dati
-    return random_entry["setting"], random_entry["character"], random_entry["goal"]
+from typing import Tuple
 
 
+def get_random_triple(file_path) -> Tuple[str, str, str]:
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+
+        random_entry = random.choice(data)
+
+        return random_entry["setting"], random_entry["character"], random_entry["goal"]
+
+    except Exception as e:
+        raise RuntimeError(f"An unexpected error occurred: {e}")

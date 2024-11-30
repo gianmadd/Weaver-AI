@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from dotenv import load_dotenv
 from groq import Groq
@@ -11,7 +12,7 @@ client = Groq(api_key=API_KEY)
 model = "llama-3.1-70b-versatile"
 
 
-def send_prompt(prompt):
+def send_prompt(prompt: str) -> str:
     """
     Sends the prompt to the Groq model and handles the response.
     """
