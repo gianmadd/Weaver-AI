@@ -13,7 +13,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 DATA_PATH = "../data"
 START_TRIPLES_PATH = f"{DATA_PATH}/start_triples.json"
 
-model_handler = ModelHandler()
 story_manager = None  # Global instance for StoryManager
 
 LOG_DIVIDER = "=" * 50
@@ -27,7 +26,7 @@ def on_start_click(setting, character_name, goal, language):
     )
 
     # Set language in ModelHandler
-    model_handler.set_language(language)
+    model_handler = ModelHandler(language=language)
 
     # Create Character and Story objects
     character = Character(setting, character_name, goal)

@@ -2,6 +2,8 @@
 *.pyc
 poetry.lock
 .gradio/
+**/__pycache__/
+**/*.pyc
 
 
 
